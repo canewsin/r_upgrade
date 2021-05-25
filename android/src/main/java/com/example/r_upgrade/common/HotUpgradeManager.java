@@ -35,6 +35,7 @@ public class HotUpgradeManager extends ContextWrapper {
     private File getHotAssets() {
         File file;
         file = new File(getFlutterAssets(), System.currentTimeMillis() + ".zip");
+        RUpgradeLogger.get().d(TAG,  "Hot Assets Path : " + file.getPath());
         if (!file.exists()) {
             try {
                 boolean isSuccess = file.createNewFile();
@@ -47,16 +48,19 @@ public class HotUpgradeManager extends ContextWrapper {
     }
 
     private void deleteFlutterAssets() {
+        RUpgradeLogger.get().d(TAG,  "deleteFlutterAssets() : deleting flutter assets...");
         File file = new File(getFlutterAssets(), FLUTTER_ASSETS);
         if (file.exists()) {
             if (file.isDirectory()) {
                 for (File item : file.listFiles()) {
                     if (item.exists()) {
-                        item.delete();
+                        boolean result = item.delete();
+                        RUpgradeLogger.get().d(TAG,  "deleteFlutterAssets() : deleting flutter " + item.getPath() + ' ' + result);
                     }
                 }
             }
-            file.delete();
+            boolean result = file.delete();
+            RUpgradeLogger.get().d(TAG,  "deleteFlutterAssets() : deleting flutter " + file.getPath() + ' ' + result);
         }
     }
 
@@ -81,6 +85,15 @@ public class HotUpgradeManager extends ContextWrapper {
 
             deleteFlutterAssets();
             unZipFile(zipFile.getPath(), getFlutterAssets().getPath() + File.separator + FLUTTER_ASSETS, true);
+
+            File file = new File(getFlutterAssets(), FLUTTER_ASSETS);
+            if (file.isDirectory()){
+                final File[] files = file.listFiles();
+                for (int i = 0; i < files.length; i++) {
+                   File fileL = files[i];
+                    RUpgradeLogger.get().d(TAG,  "hotUpgrade() : new file created " + fileL.getPath());
+                }
+            }
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -97,6 +110,9 @@ public class HotUpgradeManager extends ContextWrapper {
      * @throws IOException
      */
     public static void unZipFile(String archive, String decompressDir, boolean isDeleteZip) throws IOException {
+        RUpgradeLogger.get().d(TAG,  "unZipFile() : unzipping files ");
+        RUpgradeLogger.get().d(TAG,  "unZipFile() : " + archive);
+        RUpgradeLogger.get().d(TAG,  "unZipFile() : " + decompressDir);
         BufferedInputStream bi;
         ZipFile zf = new ZipFile(archive);
         Enumeration e = zf.entries();
@@ -117,6 +133,7 @@ public class HotUpgradeManager extends ContextWrapper {
                 if (!fileDirFile.exists()) {
                     fileDirFile.mkdirs();
                 }
+                RUpgradeLogger.get().d(TAG,  "unZipFile() : unzipping " + fileDirFile.getPath());
                 String substring = entryName.substring(entryName.lastIndexOf("/") + 1, entryName.length());
                 BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(decompressDir + "/" + substring));
                 bi = new BufferedInputStream(zf.getInputStream(ze2));
@@ -130,10 +147,12 @@ public class HotUpgradeManager extends ContextWrapper {
             }
         }
         zf.close();
+        RUpgradeLogger.get().d(TAG,  "unZipFile() : finished");
         if (isDeleteZip) {
             File zipFile = new File(archive);
             if (zipFile.exists() && zipFile.getName().endsWith(".zip")) {
                 zipFile.delete();
+                RUpgradeLogger.get().d(TAG,  "unZipFile() : deleting zip file " + zipFile.getPath());
             }
         }
     }

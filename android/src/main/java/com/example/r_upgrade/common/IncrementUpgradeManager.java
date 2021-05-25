@@ -1,28 +1,26 @@
 package com.example.r_upgrade.common;
 
+import java.io.File;
+
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Environment;
 import android.util.Log;
 
-
-import com.example.r_upgrade_lib.RUpgradeLib;
-
-import java.io.File;
+import me.ele.patch.BsPatch;
 
 public class IncrementUpgradeManager extends ContextWrapper {
     private static final String TAG = "r_upgrade.Increment";
-    private String oldApkPath;
-    private RUpgradeLib rUpgradeLib;
+    final private String oldApkPath;
 
     public IncrementUpgradeManager(Context base) {
         super(base);
+        BsPatch.init(base);
         oldApkPath = base.getPackageResourcePath();
-        rUpgradeLib = new RUpgradeLib();
     }
 
     public String mixinAndGetNewApk(String patchPath) {
-        File parentFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File parentFile = this.getExternalFilesDir(null);
         File newApkFile = new File(parentFile, oldApkPath.substring(oldApkPath.lastIndexOf("/") + 1));
         try {
             File patchFile = new File(patchPath);
@@ -36,8 +34,10 @@ public class IncrementUpgradeManager extends ContextWrapper {
                 newApkFile.delete();
             }
             newApkFile.createNewFile();
-            rUpgradeLib.mixinPatch(oldApkPath, patchPath, newApkFile.getPath());
-            RUpgradeLogger.get().d(TAG, "mixinAndGetNewApk" + newApkFile.getPath());
+            RUpgradeLogger.get().d(TAG, "patchFilePath : " + patchPath);
+            RUpgradeLogger.get().d(TAG, "mixinAndGetNewApk : " + newApkFile.getPath());
+            BsPatch.workSync(oldApkPath,newApkFile.getPath(),patchPath);
+            RUpgradeLogger.get().d(TAG, "apkPatchingSucceeded" + newApkFile.getPath());
             return newApkFile.getPath();
         } catch (Exception e) {
             RUpgradeLogger.get().d(TAG, "合成失败：");

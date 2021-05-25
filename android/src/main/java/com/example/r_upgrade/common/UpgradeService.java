@@ -160,7 +160,9 @@ public class UpgradeService extends Service {
     @Override
     public void onDestroy() {
         unregisterReceiver(actionReceiver);
-        runnable.handlerDownloadPause();
+        if (runnable != null) {
+            runnable.handlerDownloadPause();
+        }
         super.onDestroy();
     }
 
